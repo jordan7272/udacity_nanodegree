@@ -1,10 +1,15 @@
 import webbrowser
 
-class Movie():
+class Video():
+    def __init__(self, title):
+        self.title = title
+
+class Movie(Video):
     """This class provides a way to store movie related information"""
     VALID_RATINGS = ["G", "PG", "PG-13", "R"]
     
     def __init__(self, title, art, trailer, director, actors, release, criterion, criterion_icon):
+        Video.__init__(self, title)
         self.title = title
         self.poster_image_url = art
         self.trailer_youtube_url = trailer
