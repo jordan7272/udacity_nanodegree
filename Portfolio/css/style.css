@@ -1,153 +1,118 @@
+.page-body {
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.title-bar {
+  padding: 2%;
+  border-bottom: solid;
+}
+
+.logo {
+  padding-top: 5px;
+  min-width: 50px;
+}
+
+.title {
+  text-align: right;
+  vertical-align: bottom;
+}
+
+.title-h1 {
+  line-height: 50%;
+}
+
+.title-h3 {
+  line-height: 50%;
+}
+
+.body-photo {
+  padding-top: 10px;
+  margin: auto;
+}
+
+.featuredWorkTitle {
+  padding-left: 2%;
+}
+
+.projects-figure {
+  padding-top: 2%;
+  display: block;
+}
+
+.projects-figcaption {
+  line-height: 60%;
+  text-align: center;
+}
+
 @media screen and (max-width: 768px) {
-  #logo {
-    min-width: 50px;
-    width: 100%;
-  }
-  #title h1 {
+  .title-h1 {
     font-size: 24px;
     }
-  #title h3 {
+  .title-h3 {
     font-size: 20px;
     }
-  #bodyPhoto {
-    padding-left: 2px;
-    padding-right: 2px;
-    }
-  #featuredWorkTitle h1 {
+  .featured-work-title-h1 {
     font-size: 24px;
   }
-  #projects figcaption {
+  .projects-figcaption-h3 {
+    font-size:24px;
+  }
+  .projects-figcaption-a-p {
     font-size:18px;
   }
-
 }
 
 @media screen and (min-width: 769px) and (max-width: 992px) {
-  #logo {
-    width: 100%;
-    max-width: 150px;
-  }
-  #title h1 {
+  .title-h1 {
     font-size: 36px;
     }
-  #title h3 {
+  .title-h3 {
     font-size: 30px;
     }
-  #bodyPhoto {
-    padding-left: 1%;
-    padding-right: 1%;
-    }
-  #featuredWorkTitle h1 {
+  .featured-work-title-h1 {
     font-size: 36px;
   }
-  #projects figcaption {
-    font-size:30px;
+  .projects-figcaption-h3 {
+    font-size:36px;
   }
-  #projects figcaption a p {
+  .projects-figcaption-a-p {
     font-size:24px;
   }
 }
 
 @media screen and (min-width: 993px) and (max-width: 1200px) {
-  #logo {
-    width: 100%;
-    max-width: 150px;
-  }
-  #title h1 {
+  .title-h1 {
     font-size: 48px;
     }
-  #title h3 {
+  .title-h3 {
     font-size: 36px;
     }
-  #bodyPhoto {
-    padding-left: 1%;
-    padding-right: 1%;
-    }
-  #featuredWorkTitle h1 {
+  .featured-work-title-h1 {
     font-size: 36px;
   }
-  #projects figcaption {
-    font-size:46px;
+  .projects-figcaption-h3 {
+    font-size:40px;
   }
-  #projects figcaption a p {
-    font-size:28px;
-  }
-}
-
-@media screen and (min-width: 1201px) {
-  #logo {
-    width: 150px;
-  }
-  #title h1 {
-    font-size: 60px;
-    line-height: 80%
-    }
-  #title h3 {
-    font-size: 48px;
-    line-height: 80%;
-    }
-  #bodyPhoto {
-    padding-left: 1%;
-    padding-right: 1%;
-  }
-  #featuredWorkTitle h1 {
-    font-size: 60px;
-  }
-  #projects figcaption {
-    font-size:48px;
-  }
-  #projects figcaption a p {
+  .projects-figcaption-a-p {
     font-size:30px;
   }
 }
 
-
-body {
-  font-family: 'Share Tech Mono', monospace;
-}
-
-header{
-  padding-top: 10px;
-  padding-bottom: 10px;
-  padding-left: 2%;
-  padding-right: 2%;
-  border-bottom: solid;
-}
-
-#logo {
-  padding-top: 5px;
-}
-
-#title {
-  text-align: right;
-  vertical-align: bottom;
-}
-
-#title h1 {
-  line-height: 50%;
-}
-
-#title h3 {
-  line-height: 50%;
-}
-
-#bodyPhoto {
-  padding-top: 10px;
-  width: 100%;
-}
-
-#featuredWorkTitle {
-  padding-left: 2%;
-}
-
-#projects {
-}
-
-#projects figure {
-  text-align: center;
-  width: 100%;
-}
-
-#projects figure figcaption {
-  text-align: center;
+@media screen and (min-width: 1201px) {
+  .title-h1 {
+    font-size: 60px;
+    }
+  .title-h3 {
+    font-size: 48px;
+    line-height: 80%;
+    }
+  .featured-work-title-h1 {
+    font-size: 60px;
+  }
+  .projects-figcaption-h3 {
+    font-size:48px;
+  }
+  .projects-figcaption-a-p {
+    font-size:36px;
+  }
 }
