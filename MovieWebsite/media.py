@@ -1,6 +1,7 @@
 import webbrowser
 
 class Movie():
+"""Create a Movie object"""
     def __init__(self, title, art, poster_url, youtube_url):
         self.title = title
         self.art = art
