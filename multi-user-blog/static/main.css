@@ -77,6 +77,10 @@ input[type=submit] {
     text-decoration: none;
 }
 
+.new-post-link {
+    text-align: right;
+}
+
 .post + .post {
     margin-top: 15px;
 }
@@ -91,15 +95,40 @@ input[type=submit] {
     font-weight: bold;
 }
 
-.post-date {
-    position: absolute;
-    right: 0px;
-    bottom: 0px;
-    color: #999;
+.likes-count {
+    text-align: right;
+    position: relative;
+    top: 20%;
+}
 
+
+.delete-post-buttons {
+    text-align: left;
+}
+
+.like-buttons {
+    text-align: right;
+}
+
+.post-date {
+    text-align: right;
+    color: #999;
 }
 
 .post-content {
     margin-top: 5px;
 }
 
+.comment {
+    width: 80%;
+    margin: auto;
+}
+
+.comment-content {
+    margin-top: 5px;
+}
+
+.comment-date {
+    text-align: right;
+    color: #999;
+}

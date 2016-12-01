@@ -1,0 +1,39 @@
+<div class="comment">
+    <div class="row post-heading">
+      <div class="post-title col-xs-12 col-sm-6">
+        {{c.subject}}
+      </div>
+
+        {% if c.likes %}
+      <div class="likes-count col-xs-12 col-sm-6">
+         Likes = {{c.likes}}
+      </div>
+        {% endif %}
+    </div>
+
+    <div class = "row">
+      <div class="delete-post-buttons col-xs-12 col-sm-6">
+        <a href="/blog/editcomment?post_user_id={{c.user_id}}&post_id={{c.key().id()}}">Edit</a>
+        |
+        <a href="/blog/deletecomment?post_user_id={{c.user_id}}&post_id={{c.key().id()}}">Delete</a>
+      </div>
+
+    <div class="like-buttons col-xs-12 col-sm-6">
+      <a href='/blog/likecomment?post_user_id={{c.user_id}}&post_id={{c.key().id()}}'>Like</a>
+      |
+      <a href='/blog/unlikecomment?post_user_id={{c.user_id}}&post_id={{c.key().id()}}'>Unlike</a>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="comment-content">
+      {{c._render_text | safe}}
+    </div>
+  </div>
+
+  <div class = "row">
+    <div class="comment-date">
+      {{c.created.strftime("%b %d, %Y")}}
+    </div>
+  </div>
+</div>

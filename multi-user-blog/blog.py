@@ -68,7 +68,6 @@ class MainPage(BlogHandler):
   def get(self):
       self.write('Hello, Udacity!')
 
-
 ##### user stuff
 def make_salt(length = 5):
     return ''.join(random.choice(letters) for x in xrange(length))
@@ -116,13 +115,14 @@ class User(db.Model):
 
 
 ##### blog stuff
-
 def blog_key(name = 'default'):
     return db.Key.from_path('blogs', name)
 
 class Post(db.Model):
     subject = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
+    user_id = db.StringProperty(required = True)
+    likes = db.IntegerProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
 
@@ -130,10 +130,34 @@ class Post(db.Model):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p = self)
 
+
+class Comment(db.Model):
+    subject = db.StringProperty(required = True)
+    content = db.TextProperty(required = True)
+    post_id = db.StringProperty(required = True)
+    user_id = db.StringProperty(required = True)
+    likes = db.IntegerProperty(required = True)
+    created = db.DateTimeProperty(auto_now_add = True)
+    last_modified = db.DateTimeProperty(auto_now = True)
+
+    def render(self):
+        self._render_text = self.content.replace('\n', '<br>')
+        return render_str("comment.html", c = self)
+
+
 class BlogFront(BlogHandler):
     def get(self):
+        e = self.request.get('e')
+        errors = {'0': '',
+                  '1': 'Please log in.',
+                  '2': 'Not your post!',
+                  '3': 'Can not like/dislike own post',
+                  '4': 'Can not comment on own post'}
+        error = errors.get(e, '')
+
         posts = greetings = Post.all().order('-created')
-        self.render('front.html', posts = posts)
+        comments = Comment.all().order('-created')
+        self.render('front.html', posts = posts, comments = comments, error = error)
 
 class PostPage(BlogHandler):
     def get(self, post_id):
@@ -159,15 +183,258 @@ class NewPost(BlogHandler):
 
         subject = self.request.get('subject')
         content = self.request.get('content')
+        user_id = self.request.cookies.get('user_id').split('|')[0]
 
         if subject and content:
-            p = Post(parent = blog_key(), subject = subject, content = content)
+            p = Post(parent = blog_key(), subject = subject, content = content, user_id = user_id, likes = 0)
             p.put()
             self.redirect('/blog/%s' % str(p.key().id()))
         else:
             error = "subject and content, please!"
             self.render("newpost.html", subject=subject, content=content, error=error)
 
+class EditPost(BlogHandler):
+    def get(self):
+        error = 0
+        if not self.user:
+            error = 1
+            self.redirect('/blog?e=%s' % str(error))
+        else:
+            post_user_id = self.request.get('post_user_id')
+            user_id = self.request.cookies.get('user_id').split('|')[0]
+
+            if post_user_id == user_id:
+                post_id = self.request.get('post_id')
+                key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+                post = db.get(key)
+                self.render("editpost.html",  subject=post.subject, content=post.content, post_id = post_id)
+
+            else:
+                error = 2
+                self.redirect('/blog?e=%s' % str(error))
+
+    def post(self):
+        if not self.user:
+            self.redirect('/blog')
+
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        post_id = self.request.get('post_id')
+
+        if subject and content:
+            key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+            post = db.get(key)
+            post.subject = subject
+            post.content = content
+            Post.put(post)
+            self.redirect('/blog/%s' % str(post.key().id()))
+        else:
+            error = "subject and content, please!"
+            self.render("editpost.html", subject=subject, content=content, post_id = post_id, error=error)
+
+class DeletePost(BlogHandler):
+    def get(self):
+        error = 0
+        if not self.user:
+            error = 1
+        else:
+            post_user_id = self.request.get('post_user_id')
+            user_id = self.request.cookies.get('user_id').split('|')[0]
+
+            if post_user_id == user_id:
+                post_id = self.request.get('post_id')
+                comments = Comment.all().filter('post_id =', post_id)
+                for c in comments:
+                    comment_id = c.key().id()
+                    key = db.Key.from_path('Comment', comment_id, parent=blog_key())
+                    comment = db.get(key)
+                    Comment.delete(comment)
+
+                key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+                post = db.get(key)
+                Post.delete(post)
+
+            else:
+                error = 2
+
+        self.redirect('/blog?e=%s' % str(error))
+
+class LikePost(BlogHandler):
+    def get(self):
+        error = 0
+        if not self.user:
+            error = 1
+        else:
+            post_user_id = self.request.get('post_user_id')
+            user_id = self.request.cookies.get('user_id').split('|')[0]
+
+            if post_user_id != user_id:
+                post_id = self.request.get('post_id')
+                key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+                post = db.get(key)
+                post.likes = post.likes + 1
+                Post.put(post)
+
+            else:
+                error = 3
+
+        self.redirect('/blog?e=%s' % str(error))
+
+class UnlikePost(BlogHandler):
+    def get(self):
+        error = 0
+        if not self.user:
+            error = 1
+        else:
+            post_user_id = self.request.get('post_user_id')
+            user_id = self.request.cookies.get('user_id').split('|')[0]
+
+            if post_user_id != user_id:
+                post_id = self.request.get('post_id')
+                key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+                post = db.get(key)
+                post.likes = post.likes - 1
+                Post.put(post)
+
+            else:
+                error = 3
+
+        self.redirect('/blog?e=%s' % str(error))
+
+class NewComment(BlogHandler):
+    def get(self):
+        if not self.user:
+            error = 1
+            self.redirect('/blog?e=%s' % str(error))
+        else:
+            post_user_id = self.request.get('post_user_id')
+            user_id = self.request.cookies.get('user_id').split('|')[0]
+
+            if post_user_id != user_id:
+                post_id = self.request.get('post_id')
+                self.render("newcomment.html", post_id = post_id)
+
+            else:
+                error = 4
+                self.redirect('/blog?e=%s' % str(error))
+
+    def post(self):
+        if not self.user:
+            self.redirect('/blog')
+
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        post_id = self.request.get('post_id')
+        user_id = self.request.cookies.get('user_id').split('|')[0]
+
+        if subject and content:
+            c = Comment(parent = blog_key(), subject = subject, content = content, post_id=post_id, user_id=user_id, likes = 0)
+            c.put()
+            self.redirect('/blog')
+        else:
+            error = "subject and content, please!"
+            self.render("newcomment.html", subject=subject, content=content, post_id=post_id, error=error)
+
+class EditComment(BlogHandler):
+    def get(self):
+        error = 0
+        if not self.user:
+            error = 1
+            self.redirect('/blog?e=%s' % str(error))
+        else:
+            post_user_id = self.request.get('post_user_id')
+            user_id = self.request.cookies.get('user_id').split('|')[0]
+
+            if post_user_id == user_id:
+                post_id = self.request.get('post_id')
+                key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+                comment = db.get(key)
+                self.render("editcomment.html",  subject=comment.subject, content=comment.content, post_id = post_id)
+
+            else:
+                error = 2
+                self.redirect('/blog?e=%s' % str(error))
+
+    def post(self):
+        if not self.user:
+            self.redirect('/blog')
+
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        post_id = self.request.get('post_id')
+
+        if subject and content:
+            key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+            comment = db.get(key)
+            comment.subject = subject
+            comment.content = content
+            Comment.put(comment)
+            self.redirect('/blog/')
+        else:
+            error = "subject and content, please!"
+            self.render("editcomment.html", subject=subject, content=content, post_id = post_id, error=error)
+
+class DeleteComment(BlogHandler):
+    def get(self):
+        error = 0
+        if not self.user:
+            error = 1
+        else:
+            post_user_id = self.request.get('post_user_id')
+            user_id = self.request.cookies.get('user_id').split('|')[0]
+
+            if post_user_id == user_id:
+                post_id = self.request.get('post_id')
+                key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+                comment = db.get(key)
+                Comment.delete(comment)
+
+            else:
+                error = 2
+
+        self.redirect('/blog?e=%s' % str(error))
+
+class LikeComment(BlogHandler):
+    def get(self):
+        error = 0
+        if not self.user:
+            error = 1
+        else:
+            post_user_id = self.request.get('post_user_id')
+            user_id = self.request.cookies.get('user_id').split('|')[0]
+
+            if post_user_id != user_id:
+                post_id = self.request.get('post_id')
+                key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+                comment = db.get(key)
+                comment.likes = comment.likes + 1
+                Comment.put(comment)
+
+            else:
+                error = 3
+
+        self.redirect('/blog?e=%s' % str(error))
+
+class UnlikeComment(BlogHandler):
+    def get(self):
+        error = 0
+        if not self.user:
+            error = 1
+        else:
+            post_user_id = self.request.get('post_user_id')
+            user_id = self.request.cookies.get('user_id').split('|')[0]
+
+            if post_user_id != user_id:
+                post_id = self.request.get('post_id')
+                key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+                comment = db.get(key)
+                comment.likes = comment.likes - 1
+                Comment.put(comment)
+
+            else:
+                error = 3
+
+        self.redirect('/blog?e=%s' % str(error))
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
@@ -265,6 +532,15 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/?', BlogFront),
                                ('/blog/([0-9]+)', PostPage),
                                ('/blog/newpost', NewPost),
+                               ('/blog/editpost', EditPost),
+                               ('/blog/deletepost', DeletePost),
+                               ('/blog/like', LikePost),
+                               ('/blog/unlike', UnlikePost),
+                               ('/blog/newcomment', NewComment),
+                               ('/blog/editcomment', EditComment),
+                               ('/blog/deletecomment', DeleteComment),
+                               ('/blog/likecomment', LikeComment),
+                               ('/blog/unlikecomment', UnlikeComment),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout),

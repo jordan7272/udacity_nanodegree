@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>new post</h2>
+  <h2>new comment</h2>
 
-    <form method="post">
+    <form method="post" action="/blog/newcomment?post_id={{post_id}}">
       <div class = "row">
         <label>
           <div>subject</div>

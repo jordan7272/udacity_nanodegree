@@ -4,6 +4,11 @@
 
   {% for p in posts %}
     {{ p.render() | safe }}
+      {% for c in comments %}
+        {% if c.post_id== p.key().id()|string  %}
+          {{ c.render() | safe }}
+        {% endif %}
+      {% endfor %}
     <br><br>
   {% endfor %}
 

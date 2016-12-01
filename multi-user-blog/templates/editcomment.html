@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>new post</h2>
+  <h2>edit comment</h2>
 
-    <form method="post">
+    <form method="post" action="/blog/editcomment?post_id={{post_id}}">
       <div class = "row">
         <label>
           <div>subject</div>
@@ -11,7 +11,7 @@
         </label>
       </div>
 
-      <div class="row">
+      <div class = "row">
         <label>
           <div>blog</div>
           <textarea name="content">{{content}}</textarea>
@@ -20,7 +20,7 @@
 
       <div class="error">{{error}}</div>
 
-      <div class="row">
+      <div class = "row">
         <input type="submit">
       </div>
     </form>
