@@ -10,5 +10,5 @@ project turns green, select the browse button in the app engine. The app should 
 
 In order to deploy the project to the Google Cloud SDK, navigate to the ./multi-user-blog directory in the command line, and type
 "gcloud init" into the terminal and press enter. Follow the instructions by logging in to your google account, and selecting the project
-from the Google SDK you wish to work on. After completion, enter "gcloud deploy app.yaml" into the terminal and press enter. The app should
+from the Google SDK you wish to work on. After completion, enter "gcloud app deploy app.yaml" into the terminal and press enter. The app should
 be deployed to [project-name].appspot.com.
