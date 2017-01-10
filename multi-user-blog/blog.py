@@ -68,7 +68,6 @@ class MainPage(BlogHandler):
   def get(self):
       self.write('Hello, Udacity!')
 
-##### user stuff
 def make_salt(length = 5):
     return ''.join(random.choice(letters) for x in xrange(length))
 
@@ -114,7 +113,6 @@ class User(db.Model):
             return u
 
 
-##### blog stuff
 def blog_key(name = 'default'):
     return db.Key.from_path('blogs', name)
 
@@ -175,11 +173,11 @@ class NewPost(BlogHandler):
         if self.user:
             self.render("newpost.html")
         else:
-            self.redirect("/login")
+            return self.redirect("/login")
 
     def post(self):
         if not self.user:
-            self.redirect('/blog')
+            return self.redirect('/blog')
 
         subject = self.request.get('subject')
         content = self.request.get('content')
@@ -188,7 +186,7 @@ class NewPost(BlogHandler):
         if subject and content:
             p = Post(parent = blog_key(), subject = subject, content = content, user_id = user_id, likes = 0)
             p.put()
-            self.redirect('/blog/%s' % str(p.key().id()))
+            return self.redirect('/blog/%s' % str(p.key().id()))
         else:
             error = "subject and content, please!"
             self.render("newpost.html", subject=subject, content=content, error=error)
@@ -198,7 +196,7 @@ class EditPost(BlogHandler):
         error = 0
         if not self.user:
             error = 1
-            self.redirect('/blog?e=%s' % str(error))
+            return self.redirect('/blog?e=%s' % str(error))
         else:
             post_user_id = self.request.get('post_user_id')
             user_id = self.request.cookies.get('user_id').split('|')[0]
@@ -211,11 +209,11 @@ class EditPost(BlogHandler):
 
             else:
                 error = 2
-                self.redirect('/blog?e=%s' % str(error))
+                return self.redirect('/blog?e=%s' % str(error))
 
     def post(self):
         if not self.user:
-            self.redirect('/blog')
+            return self.redirect('/blog')
 
         subject = self.request.get('subject')
         content = self.request.get('content')
@@ -227,7 +225,7 @@ class EditPost(BlogHandler):
             post.subject = subject
             post.content = content
             Post.put(post)
-            self.redirect('/blog/%s' % str(post.key().id()))
+            return self.redirect('/blog/%s' % str(post.key().id()))
         else:
             error = "subject and content, please!"
             self.render("editpost.html", subject=subject, content=content, post_id = post_id, error=error)
@@ -257,7 +255,7 @@ class DeletePost(BlogHandler):
             else:
                 error = 2
 
-        self.redirect('/blog?e=%s' % str(error))
+        return self.redirect('/blog?e=%s' % str(error))
 
 class LikePost(BlogHandler):
     def get(self):
@@ -278,7 +276,7 @@ class LikePost(BlogHandler):
             else:
                 error = 3
 
-        self.redirect('/blog?e=%s' % str(error))
+        return self.redirect('/blog?e=%s' % str(error))
 
 class UnlikePost(BlogHandler):
     def get(self):
@@ -299,13 +297,13 @@ class UnlikePost(BlogHandler):
             else:
                 error = 3
 
-        self.redirect('/blog?e=%s' % str(error))
+        return self.redirect('/blog?e=%s' % str(error))
 
 class NewComment(BlogHandler):
     def get(self):
         if not self.user:
             error = 1
-            self.redirect('/blog?e=%s' % str(error))
+            return self.redirect('/blog?e=%s' % str(error))
         else:
             post_user_id = self.request.get('post_user_id')
             user_id = self.request.cookies.get('user_id').split('|')[0]
@@ -316,11 +314,11 @@ class NewComment(BlogHandler):
 
             else:
                 error = 4
-                self.redirect('/blog?e=%s' % str(error))
+                return self.redirect('/blog?e=%s' % str(error))
 
     def post(self):
         if not self.user:
-            self.redirect('/blog')
+            return self.redirect('/blog')
 
         subject = self.request.get('subject')
         content = self.request.get('content')
@@ -330,7 +328,7 @@ class NewComment(BlogHandler):
         if subject and content:
             c = Comment(parent = blog_key(), subject = subject, content = content, post_id=post_id, user_id=user_id, likes = 0)
             c.put()
-            self.redirect('/blog')
+            return self.redirect('/blog')
         else:
             error = "subject and content, please!"
             self.render("newcomment.html", subject=subject, content=content, post_id=post_id, error=error)
@@ -340,7 +338,7 @@ class EditComment(BlogHandler):
         error = 0
         if not self.user:
             error = 1
-            self.redirect('/blog?e=%s' % str(error))
+            return self.redirect('/blog?e=%s' % str(error))
         else:
             post_user_id = self.request.get('post_user_id')
             user_id = self.request.cookies.get('user_id').split('|')[0]
@@ -353,11 +351,11 @@ class EditComment(BlogHandler):
 
             else:
                 error = 2
-                self.redirect('/blog?e=%s' % str(error))
+                return self.redirect('/blog?e=%s' % str(error))
 
     def post(self):
         if not self.user:
-            self.redirect('/blog')
+            return self.redirect('/blog')
 
         subject = self.request.get('subject')
         content = self.request.get('content')
@@ -369,7 +367,7 @@ class EditComment(BlogHandler):
             comment.subject = subject
             comment.content = content
             Comment.put(comment)
-            self.redirect('/blog/')
+            return self.redirect('/blog/')
         else:
             error = "subject and content, please!"
             self.render("editcomment.html", subject=subject, content=content, post_id = post_id, error=error)
@@ -392,7 +390,7 @@ class DeleteComment(BlogHandler):
             else:
                 error = 2
 
-        self.redirect('/blog?e=%s' % str(error))
+        return self.redirect('/blog?e=%s' % str(error))
 
 class LikeComment(BlogHandler):
     def get(self):
@@ -413,7 +411,7 @@ class LikeComment(BlogHandler):
             else:
                 error = 3
 
-        self.redirect('/blog?e=%s' % str(error))
+        return self.redirect('/blog?e=%s' % str(error))
 
 class UnlikeComment(BlogHandler):
     def get(self):
@@ -434,7 +432,7 @@ class UnlikeComment(BlogHandler):
             else:
                 error = 3
 
-        self.redirect('/blog?e=%s' % str(error))
+        return self.redirect('/blog?e=%s' % str(error))
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
@@ -497,7 +495,7 @@ class Register(Signup):
             u.put()
 
             self.login(u)
-            self.redirect('/blog')
+            return self.redirect('/blog')
 
 class Login(BlogHandler):
     def get(self):
@@ -510,7 +508,7 @@ class Login(BlogHandler):
         u = User.login(username, password)
         if u:
             self.login(u)
-            self.redirect('/blog')
+            return self.redirect('/blog')
         else:
             msg = 'Invalid login'
             self.render('login-form.html', error = msg)
@@ -518,15 +516,8 @@ class Login(BlogHandler):
 class Logout(BlogHandler):
     def get(self):
         self.logout()
-        self.redirect('/blog')
+        return self.redirect('/blog')
 
-class Welcome(BlogHandler):
-    def get(self):
-        username = self.request.get('username')
-        if valid_username(username):
-            self.render('welcome.html', username = username)
-        else:
-            self.redirect('/unit2/signup')
 
 app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/?', BlogFront),
