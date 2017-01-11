@@ -120,7 +120,8 @@ class Post(db.Model):
     subject = db.StringProperty(required = True)
     content = db.TextProperty(required = True)
     user_id = db.StringProperty(required = True)
-    likes = db.IntegerProperty(required = True)
+    likes = db.StringListProperty()
+    num_likes = db.IntegerProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
 
@@ -134,7 +135,8 @@ class Comment(db.Model):
     content = db.TextProperty(required = True)
     post_id = db.StringProperty(required = True)
     user_id = db.StringProperty(required = True)
-    likes = db.IntegerProperty(required = True)
+    likes = db.StringListProperty()
+    num_likes = db.IntegerProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
 
@@ -150,12 +152,13 @@ class BlogFront(BlogHandler):
                   '1': 'Please log in.',
                   '2': 'Not your post!',
                   '3': 'Can not like/dislike own post',
-                  '4': 'Can not comment on own post'}
+                  '4': 'Can not comment on own post',
+                  '5': 'Can not like twice'}
         error = errors.get(e, '')
 
         posts = greetings = Post.all().order('-created')
         comments = Comment.all().order('-created')
-        self.render('front.html', posts = posts, comments = comments, error = error)
+        self.render('front.html', posts=posts, comments=comments, error=error)
 
 class PostPage(BlogHandler):
     def get(self, post_id):
@@ -166,7 +169,7 @@ class PostPage(BlogHandler):
             self.error(404)
             return
 
-        self.render("permalink.html", post = post)
+        self.render("permalink.html", post=post)
 
 class NewPost(BlogHandler):
     def get(self):
@@ -184,7 +187,7 @@ class NewPost(BlogHandler):
         user_id = self.request.cookies.get('user_id').split('|')[0]
 
         if subject and content:
-            p = Post(parent = blog_key(), subject = subject, content = content, user_id = user_id, likes = 0)
+            p = Post(parent=blog_key(), subject=subject, content=content, user_id=user_id, num_likes=0)
             p.put()
             return self.redirect('/blog/%s' % str(p.key().id()))
         else:
@@ -205,7 +208,7 @@ class EditPost(BlogHandler):
                 post_id = self.request.get('post_id')
                 key = db.Key.from_path('Post', int(post_id), parent=blog_key())
                 post = db.get(key)
-                self.render("editpost.html",  subject=post.subject, content=post.content, post_id = post_id)
+                self.render("editpost.html", subject=post.subject, content=post.content, post_id=post_id)
 
             else:
                 error = 2
@@ -228,7 +231,7 @@ class EditPost(BlogHandler):
             return self.redirect('/blog/%s' % str(post.key().id()))
         else:
             error = "subject and content, please!"
-            self.render("editpost.html", subject=subject, content=content, post_id = post_id, error=error)
+            self.render("editpost.html", subject=subject, content=content, post_id=post_id, error=error)
 
 class DeletePost(BlogHandler):
     def get(self):
@@ -270,7 +273,13 @@ class LikePost(BlogHandler):
                 post_id = self.request.get('post_id')
                 key = db.Key.from_path('Post', int(post_id), parent=blog_key())
                 post = db.get(key)
-                post.likes = post.likes + 1
+                liker_list = post.likes
+                for liker in liker_list:
+                    if liker == user_id:
+                        error = 5
+                        return self.redirect('/blog?e=%s' % str(error))
+                post.likes.append(user_id)
+                post.num_likes = post.num_likes + 1
                 Post.put(post)
 
             else:
@@ -291,7 +300,7 @@ class UnlikePost(BlogHandler):
                 post_id = self.request.get('post_id')
                 key = db.Key.from_path('Post', int(post_id), parent=blog_key())
                 post = db.get(key)
-                post.likes = post.likes - 1
+                post.num_likes = post.num_likes - 1
                 Post.put(post)
 
             else:
@@ -326,7 +335,7 @@ class NewComment(BlogHandler):
         user_id = self.request.cookies.get('user_id').split('|')[0]
 
         if subject and content:
-            c = Comment(parent = blog_key(), subject = subject, content = content, post_id=post_id, user_id=user_id, likes = 0)
+            c = Comment(parent = blog_key(), subject=subject, content=content, post_id=post_id, user_id=user_id, num_likes=0)
             c.put()
             return self.redirect('/blog')
         else:
@@ -347,7 +356,7 @@ class EditComment(BlogHandler):
                 post_id = self.request.get('post_id')
                 key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
                 comment = db.get(key)
-                self.render("editcomment.html",  subject=comment.subject, content=comment.content, post_id = post_id)
+                self.render("editcomment.html", subject=comment.subject, content=comment.content, post_id=post_id)
 
             else:
                 error = 2
@@ -405,7 +414,13 @@ class LikeComment(BlogHandler):
                 post_id = self.request.get('post_id')
                 key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
                 comment = db.get(key)
-                comment.likes = comment.likes + 1
+                liker_list = comment.likes
+                for liker in liker_list:
+                    if liker == user_id:
+                        error = 5
+                        return self.redirect('/blog?e=%s' % str(error))
+                comment.likes.append(user_id)
+                comment.num_likes = comment.num_likes + 1
                 Comment.put(comment)
 
             else:
@@ -426,7 +441,7 @@ class UnlikeComment(BlogHandler):
                 post_id = self.request.get('post_id')
                 key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
                 comment = db.get(key)
-                comment.likes = comment.likes - 1
+                comment.num_likes = comment.num_likes - 1
                 Comment.put(comment)
 
             else:
