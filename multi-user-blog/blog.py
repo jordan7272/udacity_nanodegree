@@ -11,22 +11,26 @@ import jinja2
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
-                               autoescape = True)
+jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
+                               autoescape=True)
 
 secret = 'fart'
+
 
 def render_str(template, **params):
     t = jinja_env.get_template(template)
     return t.render(params)
 
+
 def make_secure_val(val):
     return '%s|%s' % (val, hmac.new(secret, val).hexdigest())
+
 
 def check_secure_val(secure_val):
     val = secure_val.split('|')[0]
     if secure_val == make_secure_val(val):
         return val
+
 
 class BlogHandler(webapp2.RequestHandler):
     def write(self, *a, **kw):
@@ -60,38 +64,45 @@ class BlogHandler(webapp2.RequestHandler):
         uid = self.read_secure_cookie('user_id')
         self.user = uid and User.by_id(int(uid))
 
+
 def render_post(response, post):
     response.out.write('<b>' + post.subject + '</b><br>')
     response.out.write(post.content)
 
-class MainPage(BlogHandler):
-  def get(self):
-      self.write('Hello, Udacity!')
 
-def make_salt(length = 5):
+class MainPage(BlogHandler):
+    def get(self):
+        self.write('Hello, Udacity!')
+
+
+def make_salt(length=5):
     return ''.join(random.choice(letters) for x in xrange(length))
 
-def make_pw_hash(name, pw, salt = None):
+
+def make_pw_hash(name, pw, salt=None):
     if not salt:
         salt = make_salt()
     h = hashlib.sha256(name + pw + salt).hexdigest()
     return '%s,%s' % (salt, h)
 
+
 def valid_pw(name, password, h):
     salt = h.split(',')[0]
     return h == make_pw_hash(name, password, salt)
 
-def users_key(group = 'default'):
+
+def users_key(group='default'):
     return db.Key.from_path('users', group)
 
+
 class User(db.Model):
-    name = db.StringProperty(required = True)
-    pw_hash = db.StringProperty(required = True)
+    name = db.StringProperty(required=True)
+    pw_hash = db.StringProperty(required=True)
     email = db.StringProperty()
 
     @classmethod
     def by_id(cls, uid):
-        return User.get_by_id(uid, parent = users_key())
+        return User.get_by_id(uid, parent=users_key())
 
     @classmethod
     def by_name(cls, name):
@@ -99,12 +110,12 @@ class User(db.Model):
         return u
 
     @classmethod
-    def register(cls, name, pw, email = None):
+    def register(cls, name, pw, email=None):
         pw_hash = make_pw_hash(name, pw)
-        return User(parent = users_key(),
-                    name = name,
-                    pw_hash = pw_hash,
-                    email = email)
+        return User(parent=users_key(),
+                    name=name,
+                    pw_hash=pw_hash,
+                    email=email)
 
     @classmethod
     def login(cls, name, pw):
@@ -113,36 +124,37 @@ class User(db.Model):
             return u
 
 
-def blog_key(name = 'default'):
+def blog_key(name='default'):
     return db.Key.from_path('blogs', name)
 
+
 class Post(db.Model):
-    subject = db.StringProperty(required = True)
-    content = db.TextProperty(required = True)
-    user_id = db.StringProperty(required = True)
+    subject = db.StringProperty(required=True)
+    content = db.TextProperty(required=True)
+    user_id = db.StringProperty(required=True)
     likes = db.StringListProperty()
-    num_likes = db.IntegerProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
+    num_likes = db.IntegerProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    last_modified = db.DateTimeProperty(auto_now=True)
 
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
-        return render_str("post.html", p = self)
+        return render_str("post.html", p=self)
 
 
 class Comment(db.Model):
-    subject = db.StringProperty(required = True)
-    content = db.TextProperty(required = True)
-    post_id = db.StringProperty(required = True)
-    user_id = db.StringProperty(required = True)
+    subject = db.StringProperty(required=True)
+    content = db.TextProperty(required=True)
+    post_id = db.StringProperty(required=True)
+    user_id = db.StringProperty(required=True)
     likes = db.StringListProperty()
-    num_likes = db.IntegerProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
+    num_likes = db.IntegerProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    last_modified = db.DateTimeProperty(auto_now=True)
 
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
-        return render_str("comment.html", c = self)
+        return render_str("comment.html", c=self)
 
 
 class BlogFront(BlogHandler):
@@ -160,6 +172,7 @@ class BlogFront(BlogHandler):
         comments = Comment.all().order('-created')
         self.render('front.html', posts=posts, comments=comments, error=error)
 
+
 class PostPage(BlogHandler):
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
@@ -170,6 +183,7 @@ class PostPage(BlogHandler):
             return
 
         self.render("permalink.html", post=post)
+
 
 class NewPost(BlogHandler):
     def get(self):
@@ -187,12 +201,20 @@ class NewPost(BlogHandler):
         user_id = self.request.cookies.get('user_id').split('|')[0]
 
         if subject and content:
-            p = Post(parent=blog_key(), subject=subject, content=content, user_id=user_id, num_likes=0)
+            p = Post(parent=blog_key(),
+                     subject=subject,
+                     content=content,
+                     user_id=user_id,
+                     num_likes=0)
             p.put()
             return self.redirect('/blog/%s' % str(p.key().id()))
         else:
             error = "subject and content, please!"
-            self.render("newpost.html", subject=subject, content=content, error=error)
+            self.render("newpost.html",
+                        subject=subject,
+                        content=content,
+                        error=error)
+
 
 class EditPost(BlogHandler):
     def get(self):
@@ -208,7 +230,10 @@ class EditPost(BlogHandler):
                 post_id = self.request.get('post_id')
                 key = db.Key.from_path('Post', int(post_id), parent=blog_key())
                 post = db.get(key)
-                self.render("editpost.html", subject=post.subject, content=post.content, post_id=post_id)
+                self.render("editpost.html",
+                            subject=post.subject,
+                            content=post.content,
+                            post_id=post_id)
 
             else:
                 error = 2
@@ -231,7 +256,12 @@ class EditPost(BlogHandler):
             return self.redirect('/blog/%s' % str(post.key().id()))
         else:
             error = "subject and content, please!"
-            self.render("editpost.html", subject=subject, content=content, post_id=post_id, error=error)
+            self.render("editpost.html",
+                        subject=subject,
+                        content=content,
+                        post_id=post_id,
+                        error=error)
+
 
 class DeletePost(BlogHandler):
     def get(self):
@@ -260,6 +290,7 @@ class DeletePost(BlogHandler):
 
         return self.redirect('/blog?e=%s' % str(error))
 
+
 class LikePost(BlogHandler):
     def get(self):
         error = 0
@@ -287,6 +318,7 @@ class LikePost(BlogHandler):
 
         return self.redirect('/blog?e=%s' % str(error))
 
+
 class UnlikePost(BlogHandler):
     def get(self):
         error = 0
@@ -308,6 +340,7 @@ class UnlikePost(BlogHandler):
 
         return self.redirect('/blog?e=%s' % str(error))
 
+
 class NewComment(BlogHandler):
     def get(self):
         if not self.user:
@@ -319,7 +352,7 @@ class NewComment(BlogHandler):
 
             if post_user_id != user_id:
                 post_id = self.request.get('post_id')
-                self.render("newcomment.html", post_id = post_id)
+                self.render("newcomment.html", post_id=post_id)
 
             else:
                 error = 4
@@ -335,12 +368,22 @@ class NewComment(BlogHandler):
         user_id = self.request.cookies.get('user_id').split('|')[0]
 
         if subject and content:
-            c = Comment(parent = blog_key(), subject=subject, content=content, post_id=post_id, user_id=user_id, num_likes=0)
+            c = Comment(parent=blog_key(),
+                        subject=subject,
+                        content=content,
+                        post_id=post_id,
+                        user_id=user_id,
+                        num_likes=0)
             c.put()
             return self.redirect('/blog')
         else:
             error = "subject and content, please!"
-            self.render("newcomment.html", subject=subject, content=content, post_id=post_id, error=error)
+            self.render("newcomment.html",
+                        subject=subject,
+                        content=content,
+                        post_id=post_id,
+                        error=error)
+
 
 class EditComment(BlogHandler):
     def get(self):
@@ -379,7 +422,8 @@ class EditComment(BlogHandler):
             return self.redirect('/blog/')
         else:
             error = "subject and content, please!"
-            self.render("editcomment.html", subject=subject, content=content, post_id = post_id, error=error)
+            self.render("editcomment.html", subject=subject, content=content, post_id=post_id, error=error)
+
 
 class DeleteComment(BlogHandler):
     def get(self):
@@ -400,6 +444,7 @@ class DeleteComment(BlogHandler):
                 error = 2
 
         return self.redirect('/blog?e=%s' % str(error))
+
 
 class LikeComment(BlogHandler):
     def get(self):
@@ -428,6 +473,7 @@ class LikeComment(BlogHandler):
 
         return self.redirect('/blog?e=%s' % str(error))
 
+
 class UnlikeComment(BlogHandler):
     def get(self):
         error = 0
@@ -449,17 +495,27 @@ class UnlikeComment(BlogHandler):
 
         return self.redirect('/blog?e=%s' % str(error))
 
+
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+
+
 def valid_username(username):
     return username and USER_RE.match(username)
 
+
 PASS_RE = re.compile(r"^.{3,20}$")
+
+
 def valid_password(password):
     return password and PASS_RE.match(password)
 
-EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
+
+EMAIL_RE = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
+
+
 def valid_email(email):
     return not email or EMAIL_RE.match(email)
+
 
 class Signup(BlogHandler):
     def get(self):
@@ -472,8 +528,8 @@ class Signup(BlogHandler):
         self.verify = self.request.get('verify')
         self.email = self.request.get('email')
 
-        params = dict(username = self.username,
-                      email = self.email)
+        params = dict(username=self.username,
+                      email=self.email)
 
         if not valid_username(self.username):
             params['error_username'] = "That's not a valid username."
@@ -498,19 +554,20 @@ class Signup(BlogHandler):
     def done(self, *a, **kw):
         raise NotImplementedError
 
+
 class Register(Signup):
     def done(self):
-        #make sure the user doesn't already exist
         u = User.by_name(self.username)
         if u:
             msg = 'That user already exists.'
-            self.render('signup-form.html', error_username = msg)
+            self.render('signup-form.html', error_username=msg)
         else:
             u = User.register(self.username, self.password, self.email)
             u.put()
 
             self.login(u)
             return self.redirect('/blog')
+
 
 class Login(BlogHandler):
     def get(self):
@@ -526,7 +583,8 @@ class Login(BlogHandler):
             return self.redirect('/blog')
         else:
             msg = 'Invalid login'
-            self.render('login-form.html', error = msg)
+            self.render('login-form.html', error=msg)
+
 
 class Logout(BlogHandler):
     def get(self):
