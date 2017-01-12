@@ -3,7 +3,7 @@
 {% block content %}
   <h2>edit comment</h2>
   <a href='/blog'>Cancel</a>
-    <form method="post" action="/blog/editcomment?post_id={{post_id}}">
+    <form method="post" action="/blog/editcomment?post_id={{post_id}}&post_user_id={{post_user_id}}">
       <div class = "row">
         <label>
           <div>subject</div>

@@ -233,7 +233,8 @@ class EditPost(BlogHandler):
                 self.render("editpost.html",
                             subject=post.subject,
                             content=post.content,
-                            post_id=post_id)
+                            post_id=post_id,
+                            post_user_id=post_user_id)
 
             else:
                 error = 2
@@ -246,21 +247,28 @@ class EditPost(BlogHandler):
         subject = self.request.get('subject')
         content = self.request.get('content')
         post_id = self.request.get('post_id')
+        post_user_id = self.request.get('post_user_id')
+        user_id = self.request.cookies.get('user_id').split('|')[0]
 
-        if subject and content:
-            key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-            post = db.get(key)
-            post.subject = subject
-            post.content = content
-            Post.put(post)
-            return self.redirect('/blog/%s' % str(post.key().id()))
+        if post_user_id == user_id:
+            if subject and content:
+                key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+                post = db.get(key)
+                post.subject = subject
+                post.content = content
+                Post.put(post)
+                return self.redirect('/blog/%s' % str(post.key().id()))
+            else:
+                error = "subject and content, please!"
+                self.render("editpost.html",
+                            subject=subject,
+                            content=content,
+                            post_id=post_id,
+                            post_user_id=post_user_id,
+                            error=error)
         else:
-            error = "subject and content, please!"
-            self.render("editpost.html",
-                        subject=subject,
-                        content=content,
-                        post_id=post_id,
-                        error=error)
+            error = 2
+            return self.redirect('/blog?e=%s' % str(error))
 
 
 class DeletePost(BlogHandler):
@@ -277,7 +285,9 @@ class DeletePost(BlogHandler):
                 comments = Comment.all().filter('post_id =', post_id)
                 for c in comments:
                     comment_id = c.key().id()
-                    key = db.Key.from_path('Comment', comment_id, parent=blog_key())
+                    key = db.Key.from_path('Comment',
+                                           comment_id,
+                                           parent=blog_key())
                     comment = db.get(key)
                     Comment.delete(comment)
 
@@ -397,9 +407,15 @@ class EditComment(BlogHandler):
 
             if post_user_id == user_id:
                 post_id = self.request.get('post_id')
-                key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+                key = db.Key.from_path('Comment',
+                                       int(post_id),
+                                       parent=blog_key())
                 comment = db.get(key)
-                self.render("editcomment.html", subject=comment.subject, content=comment.content, post_id=post_id)
+                self.render("editcomment.html",
+                            subject=comment.subject,
+                            content=comment.content,
+                            post_id=post_id,
+                            post_user_id=post_user_id)
 
             else:
                 error = 2
@@ -412,17 +428,30 @@ class EditComment(BlogHandler):
         subject = self.request.get('subject')
         content = self.request.get('content')
         post_id = self.request.get('post_id')
+        post_user_id = self.request.get('post_user_id')
+        user_id = self.request.cookies.get('user_id').split('|')[0]
 
-        if subject and content:
-            key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
-            comment = db.get(key)
-            comment.subject = subject
-            comment.content = content
-            Comment.put(comment)
-            return self.redirect('/blog/')
+        if post_user_id == user_id:
+            if subject and content:
+                key = db.Key.from_path('Comment',
+                                       int(post_id),
+                                       parent=blog_key())
+                comment = db.get(key)
+                comment.subject = subject
+                comment.content = content
+                Comment.put(comment)
+                return self.redirect('/blog/')
+            else:
+                error = "subject and content, please!"
+                self.render("editcomment.html",
+                            subject=subject,
+                            content=content,
+                            post_id=post_id,
+                            post_user_id=post_user_id,
+                            error=error)
         else:
-            error = "subject and content, please!"
-            self.render("editcomment.html", subject=subject, content=content, post_id=post_id, error=error)
+            error = 2
+            return self.redirect('/blog?e=%s' % str(error))
 
 
 class DeleteComment(BlogHandler):
@@ -436,7 +465,9 @@ class DeleteComment(BlogHandler):
 
             if post_user_id == user_id:
                 post_id = self.request.get('post_id')
-                key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+                key = db.Key.from_path('Comment',
+                                       int(post_id),
+                                       parent=blog_key())
                 comment = db.get(key)
                 Comment.delete(comment)
 
@@ -457,7 +488,9 @@ class LikeComment(BlogHandler):
 
             if post_user_id != user_id:
                 post_id = self.request.get('post_id')
-                key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+                key = db.Key.from_path('Comment',
+                                       int(post_id),
+                                       parent=blog_key())
                 comment = db.get(key)
                 liker_list = comment.likes
                 for liker in liker_list:
@@ -485,7 +518,9 @@ class UnlikeComment(BlogHandler):
 
             if post_user_id != user_id:
                 post_id = self.request.get('post_id')
-                key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+                key = db.Key.from_path('Comment',
+                                       int(post_id),
+                                       parent=blog_key())
                 comment = db.get(key)
                 comment.num_likes = comment.num_likes - 1
                 Comment.put(comment)
