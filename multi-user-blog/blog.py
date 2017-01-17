@@ -225,20 +225,21 @@ class EditPost(BlogHandler):
         else:
             post_user_id = self.request.get('post_user_id')
             user_id = self.request.cookies.get('user_id').split('|')[0]
-
-            if post_user_id == user_id:
-                post_id = self.request.get('post_id')
-                key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-                post = db.get(key)
-                self.render("editpost.html",
-                            subject=post.subject,
-                            content=post.content,
-                            post_id=post_id,
-                            post_user_id=post_user_id)
-
+            post_id = self.request.get('post_id')
+            key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+            post = db.get(key)
+            if not post:
+                return self.redirect('/blog')
             else:
-                error = 2
-                return self.redirect('/blog?e=%s' % str(error))
+                if post_user_id == user_id:
+                    self.render("editpost.html",
+                                subject=post.subject,
+                                content=post.content,
+                                post_id=post_id,
+                                post_user_id=post_user_id)
+                else:
+                    error = 2
+                    return self.redirect('/blog?e=%s' % str(error))
 
     def post(self):
         if not self.user:
@@ -249,26 +250,28 @@ class EditPost(BlogHandler):
         post_id = self.request.get('post_id')
         post_user_id = self.request.get('post_user_id')
         user_id = self.request.cookies.get('user_id').split('|')[0]
-
-        if post_user_id == user_id:
-            if subject and content:
-                key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-                post = db.get(key)
-                post.subject = subject
-                post.content = content
-                Post.put(post)
-                return self.redirect('/blog/%s' % str(post.key().id()))
-            else:
-                error = "subject and content, please!"
-                self.render("editpost.html",
-                            subject=subject,
-                            content=content,
-                            post_id=post_id,
-                            post_user_id=post_user_id,
-                            error=error)
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        if not post:
+            return self.redirect('/blog')
         else:
-            error = 2
-            return self.redirect('/blog?e=%s' % str(error))
+            if post_user_id == user_id:
+                if subject and content:
+                    post.subject = subject
+                    post.content = content
+                    Post.put(post)
+                    return self.redirect('/blog/%s' % str(post.key().id()))
+                else:
+                    error = "subject and content, please!"
+                    self.render("editpost.html",
+                                subject=subject,
+                                content=content,
+                                post_id=post_id,
+                                post_user_id=post_user_id,
+                                error=error)
+            else:
+                error = 2
+                return self.redirect('/blog?e=%s' % str(error))
 
 
 class DeletePost(BlogHandler):
@@ -404,54 +407,54 @@ class EditComment(BlogHandler):
         else:
             post_user_id = self.request.get('post_user_id')
             user_id = self.request.cookies.get('user_id').split('|')[0]
-
-            if post_user_id == user_id:
-                post_id = self.request.get('post_id')
-                key = db.Key.from_path('Comment',
-                                       int(post_id),
-                                       parent=blog_key())
-                comment = db.get(key)
-                self.render("editcomment.html",
-                            subject=comment.subject,
-                            content=comment.content,
-                            post_id=post_id,
-                            post_user_id=post_user_id)
-
+            post_id = self.request.get('post_id')
+            key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+            comment = db.get(key)
+            if not comment:
+                return self.redirect('/blog')
             else:
-                error = 2
-                return self.redirect('/blog?e=%s' % str(error))
+                if post_user_id == user_id:
+                    self.render("editcomment.html",
+                                subject=comment.subject,
+                                content=comment.content,
+                                post_id=post_id,
+                                post_user_id=post_user_id)
+
+                else:
+                    error = 2
+                    return self.redirect('/blog?e=%s' % str(error))
 
     def post(self):
         if not self.user:
             return self.redirect('/blog')
-
-        subject = self.request.get('subject')
-        content = self.request.get('content')
-        post_id = self.request.get('post_id')
-        post_user_id = self.request.get('post_user_id')
-        user_id = self.request.cookies.get('user_id').split('|')[0]
-
-        if post_user_id == user_id:
-            if subject and content:
-                key = db.Key.from_path('Comment',
-                                       int(post_id),
-                                       parent=blog_key())
-                comment = db.get(key)
-                comment.subject = subject
-                comment.content = content
-                Comment.put(comment)
-                return self.redirect('/blog/')
-            else:
-                error = "subject and content, please!"
-                self.render("editcomment.html",
-                            subject=subject,
-                            content=content,
-                            post_id=post_id,
-                            post_user_id=post_user_id,
-                            error=error)
         else:
-            error = 2
-            return self.redirect('/blog?e=%s' % str(error))
+            subject = self.request.get('subject')
+            content = self.request.get('content')
+            post_id = self.request.get('post_id')
+            post_user_id = self.request.get('post_user_id')
+            user_id = self.request.cookies.get('user_id').split('|')[0]
+            key = db.Key.from_path('Comment', int(post_id), parent=blog_key())
+            comment = db.get(key)
+            if not comment:
+                return self.redirect('/blog')
+            else:
+                if post_user_id == user_id:
+                    if subject and content:
+                        comment.subject = subject
+                        comment.content = content
+                        Comment.put(comment)
+                        return self.redirect('/blog/')
+                    else:
+                        error = "subject and content, please!"
+                        self.render("editcomment.html",
+                                    subject=subject,
+                                    content=content,
+                                    post_id=post_id,
+                                    post_user_id=post_user_id,
+                                    error=error)
+                else:
+                    error = 2
+                    return self.redirect('/blog?e=%s' % str(error))
 
 
 class DeleteComment(BlogHandler):
